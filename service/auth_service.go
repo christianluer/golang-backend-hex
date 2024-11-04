@@ -3,22 +3,35 @@ package service
 import (
 	"errors"
 
-	"github.com/christianluer/golang-backend-hex/domain"
+	"github.com/christianluer/golang-backend-hex/domain/repository"
 	"github.com/christianluer/golang-backend-hex/infrastructure/security"
 )
 
-type AuthService struct {
-	repo domain.UserRepository
+type AuthService interface {
+	Authenticate(username, password string) (string, error)
 }
 
-func NewAuthService(repo domain.UserRepository) *AuthService {
-	return &AuthService{repo: repo}
+type authService struct {
+	userRepo repository.UserRepository
 }
 
-func (authService *AuthService) Authenticate(username, password string) (string, error) {
-	user, error := authService.repo.GetByUsername(username)
-	if error != nil || user.Password != password {
-		return "", errors.New("invalid_credentials")
+func NewAuthService(userRepo repository.UserRepository) AuthService {
+	return &authService{userRepo: userRepo}
+}
+
+func (service *authService) Authenticate(username, password string) (string, error) {
+	user, err := service.userRepo.GetByUsername(username)
+	if err != nil {
+		return "", errors.New("invalid credentials")
 	}
-	return security.GenerateToken(username)
+
+	if user.Password != password {
+		return "", errors.New("invalid credentials")
+	}
+	token, err := security.GenerateToken(username)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
