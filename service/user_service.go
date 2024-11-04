@@ -2,10 +2,13 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/christianluer/golang-backend-hex/domain/model"
 	"github.com/christianluer/golang-backend-hex/domain/repository"
 )
+
+var ErrUserAlreadyExists = errors.New("user already exists")
 
 type UserService interface {
 	RegisterUser(username, password string) (*model.User, error)
@@ -23,13 +26,19 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (service *userService) RegisterUser(username, password string) (*model.User, error) {
-	user := &model.User{Username: username, Password: password}
-	founded, _ := service.userRepo.GetByUsername(username)
-	if founded != nil {
-		return nil, errors.New("user found")
+	founded, err := service.userRepo.GetByUsername(username)
+	if err != nil {
+		return nil, fmt.Errorf("error checking user existence: %w", err)
 	}
-	err := service.userRepo.Create(user)
-	return user, err
+	if founded != nil {
+		return nil, ErrUserAlreadyExists
+	}
+	user := &model.User{Username: username, Password: password}
+	err = service.userRepo.Create(user)
+	if err != nil {
+		return nil, fmt.Errorf("error creating user: %w", err)
+	}
+	return user, nil
 }
 
 func (service *userService) GetUser(id int) (*model.User, error) {

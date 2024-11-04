@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -20,13 +21,20 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 
 func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var user model.User
+	var req RegisterUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		http.Error(w, "Error: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Println("here")
+	if err := Validate.Struct(req); err != nil {
+		http.Error(w, "Validation failed"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	createUser, err := handler.userService.RegisterUser(user.Username, user.Password)
 	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
