@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/christianluer/golang-backend-hex/domain/model"
 	"github.com/christianluer/golang-backend-hex/domain/repository"
 )
@@ -22,6 +24,10 @@ func NewUserService(repo repository.UserRepository) UserService {
 
 func (service *userService) RegisterUser(username, password string) (*model.User, error) {
 	user := &model.User{Username: username, Password: password}
+	founded, _ := service.userRepo.GetByUsername(username)
+	if founded != nil {
+		return nil, errors.New("user found")
+	}
 	err := service.userRepo.Create(user)
 	return user, err
 }

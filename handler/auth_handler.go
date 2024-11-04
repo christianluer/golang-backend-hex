@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/christianluer/golang-backend-hex/service"
@@ -28,13 +27,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate user
-	token, err := h.authService.Authenticate(creds.Username, creds.Password)
+	tokenString, err := h.authService.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
 	}
 
 	// Return JWT token as response
-	fmt.Println("token: ", token)
-	json.NewEncoder(w).Encode(map[string]string{"tokenInfo": token})
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
