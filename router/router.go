@@ -11,7 +11,7 @@ func SetupRouter(userHandler *handler.UserHandler, authHandler *handler.AuthHand
 	// User CRUD routes
 	r.HandleFunc("/users", userHandler.Register).Methods("POST")
 	r.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
-	r.HandleFunc("/users", userHandler.UpdateUser).Methods("PUT")
+	r.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT")
 	r.HandleFunc("/users", userHandler.DeleteUser).Methods("DELETE")
 	r.HandleFunc("/login", authHandler.Login).Methods("POST")
 	return r

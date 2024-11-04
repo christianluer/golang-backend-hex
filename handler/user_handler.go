@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,7 +24,7 @@ func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := validate.Struct(req); err != nil {
+	if err := structValidate(req); err != nil {
 		jsonErrorResponse(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -37,10 +38,49 @@ func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (handler *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idStr := vars["id"]
+func (handler *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	id, errParsing := getIdFromParams(mux.Vars(r))
+	var req UpdateUserRequest
+	if errParsing != nil {
+		jsonErrorResponse(w, "Error: "+errParsing.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err := handler.userService.GetUser(id)
+	if err != nil {
+		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Println(req)
+	if err := structValidate(req); err != nil {
+		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = handler.userService.UpdateUser(id, req.Username, req.Password)
+	if err != nil {
+		jsonErrorResponse(w, "Error updating user: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	updateUser := map[string]string{"message": "user updated successfully"}
+	json.NewEncoder(w).Encode(updateUser)
+}
+
+func getIdFromParams(params map[string]string) (int, error) {
+	idStr := params["id"]
 	id, errParsing := strconv.Atoi(idStr)
+	if errParsing != nil {
+		return 0, errParsing
+	}
+	return id, nil
+}
+
+func (handler *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	id, errParsing := getIdFromParams(mux.Vars(r))
 	if errParsing != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -52,9 +92,6 @@ func (handler *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
-}
-
-func (handler *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
