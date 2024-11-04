@@ -1,10 +1,23 @@
 package handler
 
-import "github.com/go-playground/validator"
+import (
+	"encoding/json"
+	"net/http"
 
-var Validate = validator.New()
+	"github.com/go-playground/validator"
+)
+
+var validate = validator.New()
 
 type RegisterUserRequest struct {
 	Username string `json:"username" validate:"required,min=3,max=32"`
-	Password string `json:"password" validate:"required,min=6"`
+	Password string `json:"password" validate:"required,min=4"`
+}
+
+func jsonErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	response := map[string]string{"error": message}
+	json.NewEncoder(w).Encode(response)
 }

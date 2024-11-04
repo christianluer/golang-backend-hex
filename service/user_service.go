@@ -26,15 +26,12 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (service *userService) RegisterUser(username, password string) (*model.User, error) {
-	founded, err := service.userRepo.GetByUsername(username)
-	if err != nil {
-		return nil, fmt.Errorf("error checking user existence: %w", err)
-	}
+	founded, _ := service.userRepo.GetByUsername(username)
 	if founded != nil {
 		return nil, ErrUserAlreadyExists
 	}
 	user := &model.User{Username: username, Password: password}
-	err = service.userRepo.Create(user)
+	err := service.userRepo.Create(user)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}

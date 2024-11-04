@@ -2,11 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/christianluer/golang-backend-hex/domain/model"
 	"github.com/christianluer/golang-backend-hex/service"
 	"github.com/gorilla/mux"
 )
@@ -20,25 +18,22 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 }
 
 func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var user model.User
 	var req RegisterUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Error: "+err.Error(), http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("here")
-	if err := Validate.Struct(req); err != nil {
-		http.Error(w, "Validation failed"+err.Error(), http.StatusBadRequest)
+	if err := validate.Struct(req); err != nil {
+		jsonErrorResponse(w, "Validation failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	createUser, err := handler.userService.RegisterUser(user.Username, user.Password)
+	createUser, err := handler.userService.RegisterUser(req.Username, req.Password)
 	if err != nil {
-		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		jsonErrorResponse(w, "Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{"username": createUser.Username}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
