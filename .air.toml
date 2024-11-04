@@ -1,0 +1,21 @@
+# air.toml
+
+# Config file path (default: .air.toml)
+# Set to empty to disable
+root_dir = "."
+tmp_dir = "tmp"
+
+[build]
+# Customize this for your project's needs
+cmd = "go build -mod=vendor -o ./tmp/main ./cmd/main.go"
+bin = "tmp/main"
+delve = false
+delay = 1000
+
+[watch]
+# Directories and files to watch for changes
+includes = ["."]
+excludes = ["tmp", "vendor"]
+
+[log]
+color = "true"
